@@ -3,75 +3,86 @@ import 'package:flutter/services.dart';
 import '../game/game_manager.dart';
 import '../widgets/cat_painter.dart';
 
-class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
 
-  @override
-  State<GameScreen> createState() => _GameScreenState();
-}
+  class GameScreen extends StatefulWidget {
+    const GameScreen({super.key});
 
-class _GameScreenState extends State<GameScreen> {
-  late GameManager gameManager;
-
-  @override
-  void initState() {
-    super.initState();
-    gameManager = GameManager();
-    gameManager.addListener(_onGameStateChanged);
+    @override
+    State<GameScreen> createState() => _GameScreenState();
   }
 
-  void _onGameStateChanged() {
-    setState(() {});
-    
-    // Vibrar cuando el juego termina
-    if (gameManager.gameState == GameState.gameOver) {
-      HapticFeedback.heavyImpact();
+  class _GameScreenState extends State<GameScreen> {
+    late GameManager gameManager;
+    bool _catImageLoaded = false;
+
+    @override
+    void initState() {
+      super.initState();
+      gameManager = GameManager();
+      gameManager.addListener(_onGameStateChanged);
+      _loadCatImage();
     }
-  }
 
-  @override
-  void dispose() {
-    gameManager.removeListener(_onGameStateChanged);
-    gameManager.dispose();
-    super.dispose();
-  }
+    Future<void> _loadCatImage() async {
+      await CatPainter.loadCatImage(context);
+      setState(() {
+        _catImageLoaded = true;
+      });
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF87CEEB), // Azul cielo
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Fondo con nubes
-            _buildBackground(),
-            
-            // Área de juego
-            GestureDetector(
-              onTap: _handleTap,
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                child: CustomPaint(
-                  painter: GamePainter(gameManager),
+    void _onGameStateChanged() {
+      setState(() {});
+      // Vibrar cuando el juego termina
+      if (gameManager.gameState == GameState.gameOver) {
+        HapticFeedback.heavyImpact();
+      }
+    }
+
+    @override
+    void dispose() {
+      gameManager.removeListener(_onGameStateChanged);
+      gameManager.dispose();
+      super.dispose();
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF87CEEB), // Azul cielo
+        body: SafeArea(
+          child: !_catImageLoaded
+              ? const Center(child: CircularProgressIndicator())
+              : Stack(
+                  children: [
+                    // Fondo con nubes
+                    _buildBackground(),
+
+                    // Área de juego
+                    GestureDetector(
+                      onTap: _handleTap,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: CustomPaint(
+                          painter: GamePainter(gameManager),
+                        ),
+                      ),
+                    ),
+
+                    // UI superior
+                    _buildTopUI(),
+
+                    // UI de juego terminado
+                    if (gameManager.gameState == GameState.gameOver)
+                      _buildGameOverOverlay(),
+
+                    // UI de inicio
+                    if (gameManager.gameState == GameState.waiting)
+                      _buildStartOverlay(),
+                  ],
                 ),
-              ),
-            ),
-            
-            // UI superior
-            _buildTopUI(),
-            
-            // UI de juego terminado
-            if (gameManager.gameState == GameState.gameOver)
-              _buildGameOverOverlay(),
-              
-            // UI de inicio
-            if (gameManager.gameState == GameState.waiting)
-              _buildStartOverlay(),
-          ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildBackground() {
@@ -392,8 +403,8 @@ class GamePainter extends CustomPainter {
 
   void _drawStabilityIndicator(Canvas canvas, Size size) {
     final stability = gameManager.towerStability;
-    final barWidth = 200.0;
-    final barHeight = 20.0;
+    const barWidth = 200.0;
+    const barHeight = 20.0;
     final barX = (size.width - barWidth) / 2;
     final barY = size.height - 100;
 
