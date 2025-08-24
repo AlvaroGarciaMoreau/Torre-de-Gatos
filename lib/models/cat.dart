@@ -12,6 +12,7 @@ class Cat {
   double velocityY;
   double rotation;
   bool isStable;
+  double? fallingTargetY;
   
   Cat({
     required this.id,

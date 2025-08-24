@@ -14,7 +14,7 @@ class CatPainter extends CustomPainter {
   // Cargar la imagen solo una vez
   static Future<void> loadCatImage(BuildContext context) async {
     if (_catImage != null) return;
-    const imageProvider = AssetImage('lib/assets/gato1.png');
+  const imageProvider = AssetImage('assets/images/gato1.png');
     final completer = Completer<ui.Image>();
     final stream = imageProvider.resolve(ImageConfiguration.empty);
     stream.addListener(ImageStreamListener((ImageInfo info, bool _) {

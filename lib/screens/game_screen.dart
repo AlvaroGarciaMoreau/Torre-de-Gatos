@@ -372,11 +372,31 @@ class GamePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Calcular el gato más alto
+    double minY = size.height;
+    for (final cat in gameManager.cats) {
+      final topY = cat.y - cat.height / 2;
+      if (topY < minY) minY = topY;
+    }
+    if (gameManager.nextCat != null && gameManager.gameState == GameState.playing) {
+      final nextTopY = gameManager.nextCat!.y - gameManager.nextCat!.height / 2;
+      if (nextTopY < minY) minY = nextTopY;
+    }
+
+    // Si el gato más alto está cerca de la parte superior, aplicar desplazamiento
+    double scrollOffset = 0;
+    const topMargin = 120.0;
+    if (minY < topMargin) {
+      scrollOffset = topMargin - minY;
+    }
+
+    canvas.save();
+    canvas.translate(0, scrollOffset);
+
     // Dibujar línea del suelo
     final groundPaint = Paint()
       ..color = Colors.brown
       ..strokeWidth = 4;
-    
     canvas.drawLine(
       Offset(0, size.height - 50),
       Offset(size.width, size.height - 50),
@@ -394,6 +414,8 @@ class GamePainter extends CustomPainter {
       final nextCatPainter = CatPainter(gameManager.nextCat!, isNext: true);
       nextCatPainter.paint(canvas, size);
     }
+
+    canvas.restore();
 
     // Dibujar indicador de estabilidad
     if (gameManager.gameState == GameState.playing) {
